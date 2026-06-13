@@ -298,3 +298,27 @@ export function buildTextIconString(config) {
   return `text-icon:${JSON.stringify(config)}`
 }
 
+/**
+ * 将文字图标的文本格式化为多行（最多两行，每行最多4个字）
+ * @param {string} text - 输入文字
+ * @returns {Array<string>} 格式化后的行数组
+ */
+export function formatTextIconLines(text) {
+  if (!text) return []
+  
+  const trimmed = text.trim()
+  if (trimmed.length <= 4) return [trimmed]
+  
+  // 如果有空格，优先按照空格切分，且切分后的每段不超过4个字符
+  if (trimmed.includes(' ')) {
+    const parts = trimmed.split(/\s+/)
+    if (parts.length >= 2 && parts[0].length <= 4 && parts[1].length <= 4) {
+      return [parts[0], parts[1]]
+    }
+  }
+  
+  // 否则直接按4个字符切分
+  return [trimmed.slice(0, 4), trimmed.slice(4, 8)]
+}
+
+

@@ -644,14 +644,17 @@
                 <div class="flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/30 rounded-xl p-3 w-24 h-24 flex-shrink-0">
                   <span class="text-[10px] text-gray-400 dark:text-gray-500 mb-1">预览</span>
                   <div 
-                    class="w-12 h-12 flex items-center justify-center font-bold text-base shadow-md border border-white/5 select-none overflow-hidden"
+                    class="w-12 h-12 flex flex-col items-center justify-center font-bold shadow-md border border-white/5 select-none overflow-hidden text-center"
+                    :class="editPreviewFontSizeClass"
                     :style="{
                       color: editTextIconForm.color,
                       backgroundColor: editTextIconForm.bgColor,
                       borderRadius: editTextIconForm.radius + 'px'
                     }"
                   >
-                    {{ editTextIconForm.text || '文字' }}
+                    <div v-for="(line, idx) in editPreviewLines" :key="idx">
+                      {{ line }}
+                    </div>
                   </div>
                 </div>
 
@@ -659,11 +662,11 @@
                 <div class="flex-1 space-y-3">
                   <!-- 图标文字 -->
                   <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">图标文字 (最多4个字)</label>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">图标文字 (最多8个字，可换行)</label>
                     <input 
                       v-model="editTextIconForm.text" 
                       type="text" 
-                      maxlength="4" 
+                      maxlength="8" 
                       class="w-full px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50"
                       placeholder="例如：GG"
                     >
@@ -785,7 +788,7 @@ import TopBar from './components/TopBar.vue'
 import SearchPanel from './components/SearchPanel.vue'
 import PasswordModal from './components/modals/PasswordModal.vue'
 import AddWebsiteModal from './components/modals/AddWebsiteModal.vue'
-import { isTextIcon, parseTextIcon, buildTextIconString } from './utils/icon'
+import { isTextIcon, parseTextIcon, buildTextIconString, formatTextIconLines } from './utils/icon'
 
 // 初始化主题系统
 const { settings: themeSettings } = useTheme()
@@ -928,6 +931,21 @@ const editTextIconForm = reactive({
   color: '#ffffff',
   bgColor: '#3b82f6',
   radius: 8
+})
+
+const editPreviewLines = computed(() => {
+  return formatTextIconLines(editTextIconForm.text || '文字')
+})
+
+const editPreviewFontSizeClass = computed(() => {
+  const text = editTextIconForm.text || ''
+  if (text.length <= 2) {
+    return 'text-base'
+  } else if (text.length <= 4) {
+    return 'text-xs sm:text-sm'
+  } else {
+    return 'text-[9px] sm:text-[10px] leading-[1.1]'
+  }
 })
 
 const editColorPresets = [

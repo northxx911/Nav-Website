@@ -37,14 +37,17 @@
         <!-- 文字图标 -->
         <div
           v-if="isTextIconMode"
-          class="h-full w-full flex items-center justify-center font-bold select-none text-sm sm:text-base border border-white/5 shadow-md overflow-hidden"
+          class="h-full w-full flex flex-col items-center justify-center font-bold select-none border border-white/5 shadow-md overflow-hidden text-center"
+          :class="textIconFontSizeClass"
           :style="{
             color: textIconConfig.color,
             backgroundColor: textIconConfig.bgColor,
             borderRadius: textIconConfig.radius + 'px'
           }"
         >
-          {{ textIconConfig.text }}
+          <div v-for="(line, idx) in textIconLines" :key="idx">
+            {{ line }}
+          </div>
         </div>
 
         <!-- 显示图片 -->
@@ -122,7 +125,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { getIconUrl, isTextIcon, parseTextIcon } from '../utils/icon'
+import { getIconUrl, isTextIcon, parseTextIcon, formatTextIconLines } from '../utils/icon'
 
 const props = defineProps({
   item: Object,
@@ -184,6 +187,22 @@ const isTextIconMode = computed(() => {
 
 const textIconConfig = computed(() => {
   return parseTextIcon(props.item.iconUrl)
+})
+
+const textIconLines = computed(() => {
+  if (!textIconConfig.value) return []
+  return formatTextIconLines(textIconConfig.value.text)
+})
+
+const textIconFontSizeClass = computed(() => {
+  const text = textIconConfig.value?.text || ''
+  if (text.length <= 2) {
+    return 'text-sm sm:text-base'
+  } else if (text.length <= 4) {
+    return 'text-xs sm:text-sm'
+  } else {
+    return 'text-[9px] sm:text-[10px] leading-[1.1]'
+  }
 })
 
 const lastVisitTime = computed(() => {
