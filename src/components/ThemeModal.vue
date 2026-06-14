@@ -43,7 +43,7 @@
         <div class="mb-6">
           <h4 class="text-sm font-semibold text-gray-300 mb-3">主题颜色</h4>
           <!-- 预设颜色 -->
-          <div class="flex items-center gap-2 mb-3">
+          <div class="flex flex-wrap gap-2 mb-3">
             <button
               v-for="(color, key) in PRESET_COLORS" :key="key"
               @click="settings.primaryColor = key"

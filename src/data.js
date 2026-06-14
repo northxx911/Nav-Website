@@ -214,7 +214,8 @@ export const searchEngines = [
   {
     name: 'GitHub',
     url: 'https://github.com/search?q=',
-    icon: 'https://github.com/favicon.ico'
+    icon: 'https://github.com/favicon.ico',
+    darkIcon: true
   },
   {
     name: '导航搜索',

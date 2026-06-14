@@ -47,6 +47,33 @@ const PRESET_COLORS = {
       light: { from: '254 245 235', to: '252 240 230' }
     }
   },
+  rose: {
+    name: '樱花粉',
+    from: '244 63 94',
+    to: '251 113 133',
+    bg: {
+      dark: { from: '76 5 25', to: '15 23 42' },
+      light: { from: '255 241 242', to: '255 228 230' }
+    }
+  },
+  teal: {
+    name: '海洋青',
+    from: '13 148 136',
+    to: '45 212 191',
+    bg: {
+      dark: { from: '17 94 89', to: '15 23 42' },
+      light: { from: '240 253 250', to: '204 251 241' }
+    }
+  },
+  sunset: {
+    name: '落日红',
+    from: '239 68 68',
+    to: '249 115 22',
+    bg: {
+      dark: { from: '127 29 29', to: '15 23 42' },
+      light: { from: '254 242 242', to: '254 243 199' }
+    }
+  },
   dark: {
     name: '暗夜',
     from: '71 85 105',
@@ -70,6 +97,72 @@ const DEFAULT_SETTINGS = {
 }
 
 const settings = ref({ ...DEFAULT_SETTINGS })
+
+const rgbToHsl = (r, g, b) => {
+  r /= 255; g /= 255; b /= 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  let h, s, l = (max + min) / 2
+
+  if (max === min) {
+    h = s = 0
+  } else {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break
+      case g: h = (b - r) / d + 2; break
+      case b: h = (r - g) / d + 4; break
+    }
+    h /= 6
+  }
+
+  return { h: h * 360, s: s * 100, l: l * 100 }
+}
+
+const hslToRgb = (h, s, l) => {
+  h /= 360; s /= 100; l /= 100
+  let r, g, b
+
+  if (s === 0) {
+    r = g = b = l
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1
+      if (t > 1) t -= 1
+      if (t < 1/6) return p + (q - p) * 6 * t
+      if (t < 1/2) return q
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6
+      return p
+    }
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+    const p = 2 * l - q
+    r = hue2rgb(p, q, h + 1/3)
+    g = hue2rgb(p, q, h)
+    b = hue2rgb(p, q, h - 1/3)
+  }
+
+  return `${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)}`
+}
+
+const getDynamicBg = (primaryRgb, isDark, brightnessFactor) => {
+  const [r, g, b] = primaryRgb.split(' ').map(Number)
+  const { h, s } = rgbToHsl(r, g, b)
+  
+  let bgFromRgb, bgToRgb
+  
+  if (isDark) {
+    const targetSat = Math.min(s, 15)
+    bgFromRgb = hslToRgb(h, targetSat, 4 * brightnessFactor)
+    bgToRgb = hslToRgb(h, targetSat * 0.7, 8 * brightnessFactor)
+  } else {
+    const targetSat = Math.min(s, 6)
+    bgFromRgb = hslToRgb(h, targetSat, Math.min(100, 98 * brightnessFactor))
+    bgToRgb = hslToRgb(h, targetSat * 1.5, Math.min(100, 94 * brightnessFactor))
+  }
+  
+  return { from: bgFromRgb, to: bgToRgb }
+}
 
 const adjustBrightness = (rgbColor, factor, isDark) => {
   const [r, g, b] = rgbColor.split(' ').map(Number)
@@ -132,12 +225,11 @@ const applyTheme = () => {
     fromColor = hexToRgb(s.primaryColor)
     toColor = hexToRgb(s.primaryColor)
 
-    const preset = PRESET_COLORS.tech
-    const bg = isDark ? preset.bg.dark : preset.bg.light
+    // 使用动态背景调和逻辑计算出与主题色般配的背景色
     const brightnessFactor = s.bgBrightness / 100
-
-    bgFrom = adjustBrightness(bg.from, brightnessFactor, isDark)
-    bgTo = adjustBrightness(bg.to, brightnessFactor, isDark)
+    const { from: dynamicBgFrom, to: dynamicBgTo } = getDynamicBg(fromColor, isDark, brightnessFactor)
+    bgFrom = dynamicBgFrom
+    bgTo = dynamicBgTo
   } else {
     const preset = PRESET_COLORS.tech
     fromColor = preset.from

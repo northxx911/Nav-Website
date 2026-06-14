@@ -30,7 +30,7 @@
         class="glass-button"
         :class="isEditMode
           ? 'bg-gradient-to-r from-primary to-primary-to/80 border-primary/50 text-white hover:shadow-lg hover:shadow-primary/30'
-          : 'bg-white/10 border-white/20 text-gray-400 hover:bg-white/20 hover:text-white'"
+          : 'bg-black/5 dark:bg-white/10 border-black/10 dark:border-white/20 text-gray-600 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/20 hover:text-gray-900 dark:hover:text-white'"
         :title="isEditMode ? '完成编辑分类' : '编辑分类'"
       >
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

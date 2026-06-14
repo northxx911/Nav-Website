@@ -3,9 +3,26 @@
     <div class="relative flex-1">
       <div 
         @click="$emit('open-engine-list')"
-        class="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 p-1 sm:p-1.5 rounded-lg hover:bg-white/10 cursor-pointer flex items-center gap-1 transition-colors z-20"
+        class="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 p-1 sm:p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer flex items-center gap-1 transition-colors z-20"
       >
-        <img :src="currentEngine.icon" class="w-4 h-4 sm:w-5 sm:h-5 rounded-sm transition-all" :class="{'dark:invert brightness-0 dark:brightness-200': currentEngine.name === 'GitHub'}" :alt="currentEngine.name" />
+        <svg 
+          v-if="currentEngine.isLocal" 
+          class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300 transition-colors" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="2" 
+          viewBox="0 0 24 24"
+        >
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <img 
+          v-else 
+          :src="currentEngine.icon" 
+          class="w-4 h-4 sm:w-5 sm:h-5 rounded-sm transition-all" 
+          :class="{'dark:invert': currentEngine.darkIcon}" 
+          :alt="currentEngine.name" 
+        />
         <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
@@ -18,14 +35,14 @@
           @keypress.enter="$emit('search')"
           type="text"
           :placeholder="`在 ${currentEngine.name} 中搜索...`"
-          class="w-full bg-white/10 dark:bg-gray-900/40 border border-white/20 dark:border-white/10 rounded-xl text-white placeholder-gray-400 px-14 sm:px-20 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner backdrop-blur-md text-sm sm:text-base"
+          class="w-full bg-black/5 dark:bg-gray-900/40 border border-black/10 dark:border-white/10 rounded-xl text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 px-14 sm:px-20 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner backdrop-blur-md text-sm sm:text-base"
           ref="searchInputRef"
         />
         <!-- 清除搜索按钮 -->
         <button
           v-if="modelValue"
           @click="clearSearch"
-          class="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+          class="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-all"
           aria-label="清除搜索"
           type="button"
         >
@@ -45,7 +62,24 @@
             class="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
             :class="{ 'bg-primary/10 dark:bg-primary/20': currentEngine.name === engine.name }"
           >
-            <img :src="engine.icon" class="w-5 h-5 rounded-sm transition-all" :class="{'dark:invert brightness-0 dark:brightness-200': engine.name === 'GitHub'}" :alt="engine.name" />
+            <svg 
+              v-if="engine.isLocal" 
+              class="w-5 h-5 text-gray-600 dark:text-gray-300 transition-colors flex-shrink-0" 
+              fill="none" 
+              stroke="currentColor" 
+              stroke-width="2" 
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <img 
+              v-else 
+              :src="engine.icon" 
+              class="w-5 h-5 rounded-sm transition-all flex-shrink-0" 
+              :class="{'dark:invert': engine.darkIcon}" 
+              :alt="engine.name" 
+            />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ engine.name }}</span>
             <svg v-if="currentEngine.name === engine.name" class="w-4 h-4 text-primary ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

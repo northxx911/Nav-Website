@@ -35,7 +35,7 @@
               class="px-2 sm:px-3 py-1 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-300 border backdrop-blur-md"
               :class="activeCategory === 'frequent'
                 ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 scale-105'
-                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/30'"
+                : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white hover:border-black/20 dark:hover:border-white/30'"
             >
               常用
             </button>
@@ -46,7 +46,7 @@
               class="px-2 sm:px-3 py-1 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-300 border backdrop-blur-md flex items-center gap-0.5"
               :class="activeCategory === 'favorites'
                 ? 'bg-gradient-to-r from-primary-to to-primary border-primary-to text-white shadow-lg shadow-primary/30 scale-105'
-                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/30'"
+                : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white hover:border-black/20 dark:hover:border-white/30'"
             >
               <svg class="w-3 h-3" :class="activeCategory === 'favorites' ? 'fill-current' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -71,10 +71,10 @@
               :class="[
                 activeCategory === item.category
                   ? (item.category === '私密' ? 'bg-gradient-to-r from-red-600 to-orange-600 border-red-500' : 'bg-primary border-primary')
-                  : 'bg-white/5 border-white/10',
+                  : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10',
                 activeCategory === item.category
                   ? 'text-white shadow-lg scale-105 ' + (item.category === '私密' ? 'shadow-red-500/30' : 'shadow-primary/30')
-                  : 'text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/30',
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white hover:border-black/20 dark:hover:border-white/30',
                 draggingCategoryIndex === index ? 'opacity-30 scale-95' : ''
               ]"
             >
@@ -798,7 +798,10 @@ const navItems = ref([])  // 改为响应式数组
 const activeCategory = ref('frequent')
 
 const uniqueCategories = computed(() => {
-  const cats = navItems.value.map(item => item.category)
+  let cats = navItems.value.map(item => item.category)
+  if (!isLoggedIn.value) {
+    cats = cats.filter(c => c !== '我的服务' && c !== '私密')
+  }
   return [...new Set(cats)]
 })
 const searchQuery = ref('')
@@ -1241,7 +1244,11 @@ const sortedNavItems = computed(() => {
     : categoryOrder.value
 
   // 过滤掉友情链接分类（友情链接仅在底部显示，不在主分类栏）
-  const items = navItems.value.filter(item => item.category !== '友情链接')
+  let items = navItems.value.filter(item => item.category !== '友情链接')
+  
+  if (!isLoggedIn.value) {
+    items = items.filter(item => item.category !== '我的服务' && item.category !== '私密')
+  }
 
   if (order.length === 0) {
     return items
@@ -1484,6 +1491,12 @@ const handleLogout = () => {
   localStorage.removeItem('currentUser')
   localStorage.setItem('syncAuthToken', syncAuthToken.value)
 
+  // 退出登录时，重置私密分类解锁状态和当前选中分类
+  isPrivateUnlocked.value = false
+  if (activeCategory.value === '我的服务' || activeCategory.value === '私密') {
+    activeCategory.value = 'frequent'
+  }
+
   syncStatus.value = { type: 'success', message: '✅ 已退出登录' }
   setTimeout(() => syncStatus.value = null, 2000)
 }
@@ -1497,6 +1510,14 @@ const customOrder = ref({}) // 自定义排序 {category: [id1, id2, ...]}
 
 // 从 localStorage 加载数据
 onMounted(async () => {
+  // 游客状态下，重置私密分类解锁状态和当前选中分类
+  if (!isLoggedIn.value) {
+    isPrivateUnlocked.value = false
+    if (activeCategory.value === '我的服务' || activeCategory.value === '私密') {
+      activeCategory.value = 'frequent'
+    }
+  }
+
   // 检查并清除旧格式的 token（避免同步失败）
   const oldUserToken = localStorage.getItem('userToken')
   const oldSyncToken = localStorage.getItem('syncAuthToken')
@@ -2383,9 +2404,13 @@ const filteredItems = computed(() => {
   let items = []
   let categoryKey = activeCategory.value
 
+  const allowedCategories = isLoggedIn.value
+    ? navItems.value
+    : navItems.value.filter(c => c.category !== '我的服务' && c.category !== '私密')
+
   if (activeCategory.value === 'nav-search') {
     // 导航搜索模式：跨所有分类搜索
-    navItems.value.forEach(category => {
+    allowedCategories.forEach(category => {
       // 跳过私密分类（未解锁时）
       if (category.category === '私密' && !isPrivateUnlocked.value) {
         return
@@ -2394,14 +2419,14 @@ const filteredItems = computed(() => {
     })
   } else if (activeCategory.value === 'frequent') {
     // 常用：显示最常访问的网站
-    navItems.value.forEach(category => items = items.concat(category.items))
+    allowedCategories.forEach(category => items = items.concat(category.items))
     // 按点击次数排序，取前 16 个
     items = items
       .sort((a, b) => (clickCounts.value[b.url] || 0) - (clickCounts.value[a.url] || 0))
       .slice(0, 16)
   } else if (activeCategory.value === 'favorites') {
     // 我的收藏：显示所有收藏的项目
-    navItems.value.forEach(category => {
+    allowedCategories.forEach(category => {
       category.items.forEach(item => {
         if (isFavorite(item)) {
           items.push(item)
@@ -2410,21 +2435,14 @@ const filteredItems = computed(() => {
     })
     // 应用自定义排序
     items = sortItemsByCustomOrder(items, 'favorites')
+  } else {
     // 普通分类
-    const category = navItems.value.find(c => c.category === activeCategory.value)
+    const category = allowedCategories.find(c => c.category === activeCategory.value)
     if (category) {
       // 如果是私密分类且未解锁，返回空数组
       if (category.category === '私密' && !isPrivateUnlocked.value) {
         return []
       }
-      items = category.items
-      // 应用自定义排序
-      items = sortItemsByCustomOrder(items, activeCategory.value)
-    }
-  } else {
-    // 普通分类
-    const category = navItems.value.find(c => c.category === activeCategory.value)
-    if (category) {
       items = category.items
       // 应用自定义排序
       items = sortItemsByCustomOrder(items, activeCategory.value)
